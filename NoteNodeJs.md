@@ -26,3 +26,17 @@ Cấu hình các tham số môi trường
         {
             "presets": ["@babel/preset-env"]
         } phía sau màn ảnh chỉ là cấu hình, để làm cho thư viện hoạt động
+
+Đầu tiên cấu hình file config
+
+    import express from "express";
+     let configViewEngine = (app) =>{
+        app.use(express.static("./src/public")) //Sau này lấy ảnh trên server chỉ được lấy trong thư mục public
+        app.set("View engine", "ejs")// cho phép viết logic trong html
+        app.set("views", ./src/views") // bắt buộc phải tạo view trong thư mục view, tìm các file ejs trong thư mục view
+     }
+
+APIs là gì
+ API là cầu nối giữa back-end và front-end, back-end sẽ làm việc với database còn fron-end sẽ render ra giao diện người dùng, nôm na là đường link
+
+ APIs sẽ trả về 1 object dưới dạng json
