@@ -72,6 +72,9 @@ let getAllCode = async (req, res) => {
             errMessage : 'Error from server'
         })
     }
+
+
+    
 }
 module.exports = {
     handleLogin: handleLogin,
