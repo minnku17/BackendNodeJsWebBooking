@@ -58,15 +58,42 @@ let getAllDoctors = () => {
     }
   });
 };
+
+let checkRequiredFields = (inputData) => {
+  let arrField = [
+    "doctorId",
+    "contentHTML",
+    "contentMarkdown",
+    "action",
+    "selectedPrice",
+    "selectedPayment",
+    "selectedProvince",
+    "nameClinic",
+    "addressClinic",
+    "note",
+    "specialtyId",
+  ];
+  let isValid = true;
+  let element = "";
+
+  for (let i = 0; i < arrField.length; i++) {
+    if (!inputData[arrField[i]]) {
+      isValid = false;
+      element = arrField[i];
+      break;
+    }
+  }
+  return {
+    isValid,
+    element,
+  };
+};
+
 let saveDetailInfoDoctor = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (
-        !inputData.doctorId ||
-        !inputData.contentHTML ||
-        !inputData.contentMarkdown ||
-        !inputData.action
-      ) {
+      let checkObj = checkRequiredFields(inputData);
+      if (checkObj.isValid === false) {
         resolve({
           errCode: -1,
           errMessage: "Missing parameter ",
@@ -92,6 +119,40 @@ let saveDetailInfoDoctor = (inputData) => {
             doctorMarkdown.description = inputData.description;
             await doctorMarkdown.save();
           }
+        }
+
+        let doctorInfo = await db.Doctor_info.findOne({
+          where: { doctorId: inputData.doctorId },
+          raw: false,
+        });
+        console.log("*******************************");
+
+        console.log(inputData.addressClinic);
+
+        if (doctorInfo) {
+          doctorInfo.doctorId = inputData.doctorId;
+          doctorInfo.priceId = inputData.selectedPrice;
+          doctorInfo.paymentId = inputData.selectedPayment;
+          doctorInfo.provinceId = inputData.selectedProvince;
+          doctorInfo.nameClinic = inputData.nameClinic;
+          doctorInfo.addressClinic = inputData.addressClinic;
+          doctorInfo.note = inputData.note;
+          doctorInfo.specialtyId = inputData.specialtyId;
+          doctorInfo.clinicId = inputData.clinicId;
+
+          await doctorInfo.save();
+        } else {
+          await db.Doctor_info.create({
+            doctorId: inputData.doctorId,
+            priceId: inputData.selectedPrice,
+            paymentId: inputData.selectedPayment,
+            provinceId: inputData.selectedProvince,
+            nameClinic: inputData.nameClinic,
+            addressClinic: inputData.addressClinic,
+            note: inputData.note,
+            specialtyId: inputData.specialtyId,
+            clinicId: inputData.clinicId,
+          });
         }
 
         resolve({
@@ -132,6 +193,29 @@ let getDetailDoctorById = (id) => {
               as: "genderData",
               attributes: ["valueEn", "valueVi"],
             },
+            {
+              model: db.Doctor_info,
+              attributes: {
+                exclude: ["id", "doctorId"],
+              },
+              include: [
+                {
+                  model: db.Allcode,
+                  as: "priceTypeData",
+                  attributes: ["valueEn", "valueVi"],
+                },
+                {
+                  model: db.Allcode,
+                  as: "provinceTypeData",
+                  attributes: ["valueEn", "valueVi"],
+                },
+                {
+                  model: db.Allcode,
+                  as: "paymentTypeData",
+                  attributes: ["valueEn", "valueVi"],
+                },
+              ],
+            },
           ],
           attributes: {
             exclude: ["password"],
@@ -143,6 +227,8 @@ let getDetailDoctorById = (id) => {
         if (data && data.image) {
           data.image = new Buffer(data.image, "base64").toString("binary");
         }
+
+        if (!data) data = {};
 
         resolve({
           errCode: 0,
@@ -177,15 +263,8 @@ let bulkCreateSchedule = (data) => {
           raw: true,
         });
 
-        if (existing && existing.length > 0) {
-          existing = existing.map((item) => {
-            item.date = new Date(item.date).getTime();
-            return item;
-          });
-        }
-
         let toCreate = _.differenceWith(schedule, existing, (a, b) => {
-          return a.timeType === b.timeType && a.date === b.date;
+          return a.timeType === b.timeType && +a.date === +b.date;
         });
 
         if (toCreate && toCreate.length > 0) {
@@ -217,6 +296,20 @@ let getScheduleDoctorByDate = (doctorId, date) => {
             doctorId: doctorId,
             date: date,
           },
+          include: [
+            {
+              model: db.Allcode,
+              as: "timeTypeData",
+              attributes: ["valueEn", "valueVi"],
+            },
+            {
+              model: db.User,
+              as: "doctorData",
+              attributes: ["firstName", "lastName"],
+            },
+          ],
+          raw: false,
+          nest: true,
         });
 
         if (!dataSchedule) dataSchedule = [];
@@ -231,7 +324,124 @@ let getScheduleDoctorByDate = (doctorId, date) => {
     }
   });
 };
+let getExtraInfoDoctorBy = (doctorId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!doctorId) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required schedule",
+        });
+      } else {
+        let data = await db.Doctor_info.findOne({
+          where: { doctorId: doctorId },
+          attributes: {
+            exclude: ["id", "doctorId"],
+          },
+          include: [
+            {
+              model: db.Allcode,
+              as: "priceTypeData",
+              attributes: ["valueEn", "valueVi"],
+            },
+            {
+              model: db.Allcode,
+              as: "provinceTypeData",
+              attributes: ["valueEn", "valueVi"],
+            },
+            {
+              model: db.Allcode,
+              as: "paymentTypeData",
+              attributes: ["valueEn", "valueVi"],
+            },
+          ],
+          raw: false,
+          nest: true,
+        });
 
+        if (!data) data = {};
+
+        resolve({
+          errCode: 0,
+          data: data,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+let getProfileDoctorById = (doctorId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!doctorId) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required schedule",
+        });
+      } else {
+        let data = await db.User.findOne({
+          where: {
+            id: doctorId,
+          },
+          include: [
+            {
+              model: db.Markdown,
+              attributes: ["description", "contentHTML", "contentMarkdown"],
+            },
+            {
+              model: db.Allcode,
+              as: "positionData",
+              attributes: ["valueEn", "valueVi"],
+            },
+            {
+              model: db.Doctor_info,
+              attributes: {
+                exclude: ["id", "doctorId"],
+              },
+              include: [
+                {
+                  model: db.Allcode,
+                  as: "priceTypeData",
+                  attributes: ["valueEn", "valueVi"],
+                },
+                {
+                  model: db.Allcode,
+                  as: "provinceTypeData",
+                  attributes: ["valueEn", "valueVi"],
+                },
+                {
+                  model: db.Allcode,
+                  as: "paymentTypeData",
+                  attributes: ["valueEn", "valueVi"],
+                },
+              ],
+            },
+          ],
+          attributes: {
+            exclude: ["password"],
+          },
+          raw: false,
+          nest: true,
+        });
+
+        if (data && data.image) {
+          data.image = new Buffer(data.image, "base64").toString("binary");
+        }
+
+        if (!data) data = {};
+
+        resolve({
+          errCode: 0,
+          data: data,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
@@ -239,4 +449,6 @@ module.exports = {
   getDetailDoctorById: getDetailDoctorById,
   bulkCreateSchedule: bulkCreateSchedule,
   getScheduleDoctorByDate: getScheduleDoctorByDate,
+  getExtraInfoDoctorBy: getExtraInfoDoctorBy,
+  getProfileDoctorById: getProfileDoctorById,
 };
