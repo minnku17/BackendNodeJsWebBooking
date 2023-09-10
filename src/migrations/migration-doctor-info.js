@@ -1,46 +1,53 @@
 "use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("Users", {
+    await queryInterface.createTable("Doctor_info", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      email: {
-        type: Sequelize.STRING,
-      },
-      password: {
-        type: Sequelize.STRING,
-      },
-      firstName: {
-        type: Sequelize.STRING,
-      },
-      lastName: {
-        type: Sequelize.STRING,
-      },
-      address: {
-        type: Sequelize.STRING,
-      },
-      gender: {
-        type: Sequelize.STRING,
-      },
-      roleId: {
-        type: Sequelize.STRING,
-      },
-      phonenumber: {
-        type: Sequelize.STRING,
-      },
-      positionId: {
-        type: Sequelize.STRING,
-      },
-      image: {
-        type: Sequelize.STRING,
-      },
 
-      rememberToken: {
+      doctorId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+      },
+      specialtyId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+      },
+      clinicId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+      },
+      priceId: {
+        allowNull: false,
         type: Sequelize.STRING,
+      },
+      provinceId: {
+        allowNull: false,
+        type: Sequelize.STRING,
+      },
+      paymentId: {
+        allowNull: false,
+        type: Sequelize.STRING,
+      },
+      addressClinic: {
+        allowNull: false,
+        type: Sequelize.STRING,
+      },
+      nameClinic: {
+        allowNull: false,
+        type: Sequelize.STRING,
+      },
+      note: {
+        type: Sequelize.STRING,
+      },
+      count: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
       },
       createdAt: {
         allowNull: false,
@@ -53,6 +60,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("Users");
+    await queryInterface.dropTable("Doctor_info");
   },
 };
